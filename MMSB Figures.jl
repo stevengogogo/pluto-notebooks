@@ -223,10 +223,102 @@ md"""
 
 # ╔═╡ 91b7d696-109a-44b1-9631-69e514a290ac
 md"""
-# Problem 3.7.5
-
-Reduced Michaelis-Menten
+# Problem 3.7.5 Reduced Michaelis-Menten
 """
+
+# ╔═╡ a4a64652-a4b9-4345-9652-252daff344d8
+md"""
+# Figure 4.1, 4.2, and 4.3
+
+Steady states and phase plots
+"""
+
+# ╔═╡ f3c1efd0-b76d-496a-83bd-f2c8c57d2b94
+md"""
+# Figure 4.4, 4.5 Vector fields
+"""
+
+# ╔═╡ 04fc83f3-1d1b-4ba7-a08c-7fc646a73de3
+md"""
+# Figure 4.7, 4.8, 4.9, and 4.19A
+
+Symmetric (bistable) biological networks.
+"""
+
+# ╔═╡ 9519b1ba-726f-4a25-8993-fbe897e998cd
+md"""
+# Figure 4.11
+
+Surface plots.
+
+Reference: [PlotsGallery.jl](https://goropikari.github.io/PlotsGallery.jl/src/surface.html)
+"""
+
+# ╔═╡ 96e7a435-3411-4412-89d9-fb3b42e62a7c
+let
+	z1(x, y) = x^2 + 0.5y^2
+	z2(x, y) = (.2x^2-1)^2 + y^2
+	
+	x1 = range(-1.0, 1.0, length=51)
+	y1 = range(-1.0, 1.0, length=51)
+	
+	x2 = range(-2.75, 2.75, length=80)
+	y2 = range(-0.75, 0.75, length=80)
+	
+	p1 = surface(x1, y1, z1, title="Single-well potential")
+	p2= contourf(x1, y1, z1)
+	p3 = surface(x2, y2, z2, title="Double-well potential")
+	p4 = contourf(x2, y2, z2)
+
+	plot(p1, p2, p3, p4,size=(1000, 800))
+end
+
+# ╔═╡ 7b747fe2-05bc-40b5-9fcf-f6e11125cc91
+md"""
+# Figure 4.15, 4.16, and 4.17
+
+Oscillatory network.
+"""
+
+# ╔═╡ ec439af8-b24b-4167-8b79-756955e1375d
+"""
+Model of oscillatory network from Figure 4.14. This code generates Figures
+4.15, 4.16, and 4.17
+"""
+function model0415!(du, u, p, t)
+    @unpack s1, s2 = u
+    @unpack K0, K1, K2, N = p
+    v0 = K0
+    v1 = K1 * s1 * (1 + s2^N)
+    v2 = K2 * s2
+	du.s1 = v0 - v1
+	du.s2 = v1 - v2
+    return du
+end
+
+# ╔═╡ 998ba19b-63ca-4079-ab4b-f6de5d0d61b0
+md"""
+# Figure 4.18 Continuation diagram
+
+[Bifurcations.jl](https://github.com/tkf/Bifurcations.jl) does not work on Julia v1.6. And [BifurcationKit.jl](https://github.com/rveltz/BifurcationKit.jl) might be too complex for this example.
+
+"""
+
+# ╔═╡ 32825174-50e3-42b9-9c5d-ea744b36fefb
+md"""
+# Figure 4.22 Tangent line
+"""
+
+# ╔═╡ c94276d8-e844-437d-8ede-742bba44a2fd
+let 
+	curve(t) = 3 / (t-2)
+	tange(t) = 1.5 - (t - 4) * 0.75
+
+	plot(curve, 2.2, 8.0, lab="Curve")
+	plot!(tange, 2.7, 5.3, lab="Tangent line")
+	plot!(title="Fig 4.22", xlabel="Reaction rate", ylabel="Inhibitor concentration", 
+		  xlims=(2.0, 8.0), ylims=(0.0, 4.0))
+end
 
 # ╔═╡ 6ede64c4-4851-4506-88d9-7e58d49c35e9
 begin
@@ -461,6 +553,389 @@ let
 	plot(figs..., size=(800, 800))
 end
 
+# ╔═╡ 3b20843f-539d-455e-abcf-fe15e5fcf86a
+function model401!(du, u, p, t)
+    @unpack K1, K2, K3, K4, K5, N = p
+    @unpack A, B = u
+    
+    v1 = K1 * hill(1, B, N)
+    v5 = K5 * A
+    
+    du.A = v1 - v5 - K3 * A
+    du.B = K2 + v5 - K4 * B
+end
+
+# ╔═╡ e97c3472-bb06-4968-92eb-336520e1c455
+function figure0401()
+	tend = 1.5
+	params = (K1=20.0, K2=5.0, K3=5.0, K4=5.0, K5=2.0, N=4)
+	
+	u0s = (LVector(A=0.0, B=0.0), 
+       LVector(A=0.5, B=0.6),
+       LVector(A=0.17, B=1.1),
+       LVector(A=0.25, B=1.9),
+       LVector(A=1.85, B=1.70))
+	
+	sols = map(u0 -> solve(ODEProblem(model401!, u0, tend, params)), u0s)
+	
+	p1 = plot(sols[1], xlabel="Time", ylabel="Concentration", title="Fig. 4.2A (Time series)")
+	
+	p2 = plot(sols[1], vars=(1, 2), xlabel="[A]", ylabel="[B]", aspect_ratio=:equal,
+     title="Fig. 4.2B (Phase plot)", ylims=(0.0, 2.0), xlims=(0.0, 2.0), 
+     legend=nothing)
+	
+	p3 = plot()
+
+	for sol in sols
+		plot!(p3, sol, linealpha=0.5, legend = nothing)
+	end
+
+	plot!(p3, xlabel="Time", ylabel="Concentration", title="Fig. 4.3A (Time series)")
+	
+	p4 = plot()
+
+	for sol in sols
+		plot!(p4, sol, vars=(1, 2), linealpha=0.7, legend = nothing)
+	end
+
+	plot!(p4, aspect_ratio=:equal, title="Fig. 4.3B (Phase plot)", xlabel="[A]", ylabel="[B]", ylims=(0.0, 2.0), xlims=(0.0, 2.0), size=(600, 600))
+	
+	return (p1, p2, p3, p4)
+	
+end
+
+# ╔═╡ e342c29c-24c0-4f7e-95b9-5e3cec57210b
+let
+	figs = figure0401()
+	plot(figs..., size=(800, 800))
+end
+
+# ╔═╡ 1ead4f46-cad1-4916-bef6-23bed88059bd
+function figure0404(; params = (K1=20.0, K2=5.0, K3=5.0, K4=5.0, K5=2.0, N=4),
+	 				  tend = 1.5, 
+	                  u0s = (LVector(A=0.0, B=0.0), 
+							 LVector(A=0.5, B=0.6),
+							 LVector(A=0.17, B=1.1),
+							 LVector(A=0.25, B=1.9),
+							 LVector(A=1.85, B=1.70)))
+	
+	# Functions for nullclines
+	nullcline_a(b, p) = p.K1 / (p.K5 + p.K4)  * hill(1, b, p.N)
+	nullcline_a(b) = nullcline_a(b, params)
+	nullcline_b(b, p) = (p.K4*b - p.K2) / p.K5
+	nullcline_b(b) = nullcline_b(b, params)
+	
+	# Tweaking arrow length
+	scale_du(du, scale=20) = du ./ (norm(du)^0.5 * scale)
+	
+	# vector field
+	function df(x, y)
+		u = LVector(A=x, B=y)
+		du = similar(u)
+		model401!(du, u, params, 0.0)
+		return scale_du(du)
+	end
+	
+	sols = map(u0 -> solve(ODEProblem(model401!, u0, tend, params)), u0s)
+	
+	xx = [x for y in 0.0:0.1:2.0, x in 0.0:0.1:2.0]
+	yy = [y for y in 0.0:0.1:2.0, x in 0.0:0.1:2.0]
+	p1 = quiver(xx, yy, quiver=df, line=(:lightblue))
+
+	for sol in sols
+		plot!(p1, sol, vars=(1, 2), legend = nothing, line=(:blue))
+	end
+	
+	plot!(p1, aspect_ratio=:equal, title="Fig. 4.4A (Phase Plot with vector field)", 
+      xlabel="[A]", ylabel="[B]", xlim=(0.0, 2.0), ylim=(0.0, 2.0), size=(600, 600))
+	
+	# Figure 4.5A
+	p2 = plot(aspect_ratio=:equal, title="Fig. 4.5A, Phase plot with nullclines")
+
+	# Phase plots
+	for sol in sols
+		plot!(p2, sol, vars=(1, 2), linealpha=0.7, lab=nothing)
+	end
+
+	# Parametric plotting for nullcline
+	plot!(p2, nullcline_a, identity, 0.0, 2.0, label="A nullcline", line=(:black, :dot))
+	plot!(p2, nullcline_b, identity, 0.0, 2.0, label="B nullcline", line=(:black, :dash))
+	plot!(p2, xlim=(0.0, 2.0), ylim=(0.0, 2.0), legend=:bottomright, size=(600, 600), xlabel="[A]", ylabel="[B]")
+
+	
+	p3 = quiver(xx, yy, quiver=df, line=(:lightblue), title="Fig. 4.5B, Vector field with nullclines", xlabel="[A]", ylabel="[B]")
+	plot!(p3, nullcline_a, identity, 0.0, 2.0, label="A nullcline", line=(:black, :dot))
+	plot!(p3, nullcline_b, identity, 0.0, 2.0, label="B nullcline", line=(:black, :dash))
+	plot!(p3, aspect_ratio=1.0, xlim=(0.0, 2.0), ylim=(0.0, 2.0), legend=:bottomright, size=(600, 600))
+
+	return (p1, p2, p3)
+end
+
+# ╔═╡ 41b0b13d-045e-4d14-aaa3-e676fa1a23e5
+fig0404, fig0405a, fig0405b = figure0404()
+
+# ╔═╡ f1453c64-f07f-4a6c-bac6-8b56373ac434
+fig0404
+
+# ╔═╡ c6a20d1f-e3c4-4dc4-802c-6b06d0968f68
+fig0405a
+
+# ╔═╡ 563c736a-9b2f-42ec-9d7e-e2868122f7eb
+fig0405b
+
+# ╔═╡ c662c3a3-e83c-4f78-897b-693e76de8de8
+"Model of symmetric network from Figure 4.6. This code generates Figures 4.7, 4.8, 4.9, and 4.19A"
+function model0407!(du, u, p, t)
+    @unpack K1, K2, K3, K4, N1, N2 = p
+    @unpack s1, s2 = u
+    du.s1 = K1 * hill(1, s2, N2) - K3 * s1
+    du.s2 = K2 * hill(1, s1, N1) - K4 * s2
+    return du
+end
+
+# ╔═╡ af0f7d8a-22e7-4224-a56e-17fc48a385de
+let
+	tend = 4.0
+	p1 = (K1=20.0, K2=20.0, K3=5.0, K4=5.0, N1=1.0, N2=4.0)
+
+	u0s = (LVector(s1=3.0, s2=1.0), 
+		   LVector(s1=1.0, s2=3.0))
+
+	sols = map(u0 -> solve(ODEProblem(model0407!, u0, tend, p1)), u0s)
+	
+	p1 = plot(sols[1], xlabel="Time", ylabel="Concentration", legend=:right, title= "Fig 4.7A (1)")
+    p2 = plot(sols[2], xlabel="Time", ylabel="Concentration", legend=:right, title= "Fig 4.7A (2)")
+    fig47a = plot(p1, p2, layout=(2, 1), size=(600, 600))
+end
+
+# ╔═╡ 6ebffaf6-cf39-43a2-a29b-bdd9498bb375
+let
+	tend = 4.0
+	p1 = (K1=20.0, K2=20.0, K3=5.0, K4=5.0, N1=4.0, N2=4.0)
+
+	u0s = (LVector(s1=3.0, s2=1.0), 
+		   LVector(s1=1.0, s2=3.0))
+
+	sols = map(u0 -> solve(ODEProblem(model0407!, u0, tend, p1)), u0s)
+	
+	p1 = plot(sols[1], xlabel="Time", ylabel="Concentration", legend=:right, title= "Fig 4.8A (1)")
+    p2 = plot(sols[2], xlabel="Time", ylabel="Concentration", legend=:right, title= "Fig 4.8A (2)")
+    fig47a = plot(p1, p2, layout=(2, 1), size=(600, 600))
+end
+
+# ╔═╡ f53cbbe1-2366-4c38-a84f-dc75c9f48e3d
+let
+	p1 = (K1=20.0, K2=20.0, K3=5.0, K4=5.0, N1=1.0, N2=4.0)
+	
+	function df(x, y)
+		u = LVector(s1=x, s2=y)
+		du = similar(u)
+		model0407!(du, u, p1, 0.0)
+
+		# Tweaking arrow length
+		du ./ (norm(du)^0.5 * 20)
+	end
+	nullclineS1(s2, p) = p.K1 / p.K3 * hill(1, s2, p.N2)
+	nullclineS1(s2) = nullclineS1(s2, p1)
+	nullclineS2(s1, p) = p.K2 / p.K4 * hill(1, s1, p.N1)
+	nullclineS2(s1) = nullclineS2(s1, p1)
+	
+	r = LinRange(0.0, 5.0, 20)
+	xx = [x for y in r, x in r]
+	yy = [y for y in r, x in r]
+	pl = quiver(xx, yy, quiver=df, line=(:lightblue))
+
+	plot!(pl, nullclineS1, identity, 0.0, 5.0, lab="Nullcline S1", line=(:dash, :red))
+	plot!(pl, identity, nullclineS2, 0.0, 5.0, lab="Nullcline S2", line=(:dash, :blue))
+	plot!(pl, title="Fig 4.7 B", xlim=(0.0, 5.0), ylim=(0.0, 5.0), aspect_ratio = 1.0, size = (600, 600))
+	
+	pl
+end
+
+# ╔═╡ 51332af1-7e4a-4f4a-b68d-7380344ad010
+let
+	p1 = (K1=20.0, K2=20.0, K3=5.0, K4=5.0, N1=4.0, N2=4.0)
+	
+	function df(x, y)
+		u = LVector(s1=x, s2=y)
+		du = similar(u)
+		model0407!(du, u, p1, 0.0)
+
+		# Tweaking arrow length
+		du ./ (norm(du)^0.5 * 20)
+	end
+	nullclineS1(s2, p) = p.K1 / p.K3 * hill(1, s2, p.N2)
+	nullclineS1(s2) = nullclineS1(s2, p1)
+	nullclineS2(s1, p) = p.K2 / p.K4 * hill(1, s1, p.N1)
+	nullclineS2(s1) = nullclineS2(s1, p1)
+	
+	r = LinRange(0.0, 5.0, 20)
+	xx = [x for y in r, x in r]
+	yy = [y for y in r, x in r]
+	
+	pl = quiver(xx, yy, quiver=df, line=(:lightblue))
+
+	plot!(pl, nullclineS1, identity, 0.0, 5.0, lab="Nullcline S1", line=(:dash, :red))
+	plot!(pl, identity, nullclineS2, 0.0, 5.0, lab="Nullcline S2", line=(:dash, :blue))
+	plot!(pl, title="Fig 4.8 B", xlim=(0.0, 5.0), ylim=(0.0, 5.0), aspect_ratio = 1.0, size = (600, 600))
+	
+	r2 = LinRange(1.0, 1.5, 20)
+	xx2 = [x for y in r2, x in r2]
+	yy2 = [y for y in r2, x in r2]
+
+	pl2 = quiver(xx2, yy2, quiver=(x, y)->df(x,y) ./ 5, line=(:lightblue))
+
+	plot!(pl2, nullclineS1, identity, r2[1], r2[end], lab="Nullcline S1", line=(:dash, :red))
+	plot!(pl2, identity, nullclineS2, r2[1], r2[end], lab="Nullcline S2", line=(:dash, :blue))
+	plot!(pl2, title="Fig 4.8 B (close up)", xlim=(r2[1], r2[end]), ylim=(r2[1], r2[end]), 
+		  aspect_ratio = 1.0, size = (600, 600), xlabel="[S1]", ylabel="[S2]")
+	
+	plot(pl, pl2, size=(1000, 500))
+end
+
+# ╔═╡ b9444e52-5b7a-41da-9885-62af0fc350e7
+let
+	nullclineS1(s2, p) = p.K1 / p.K3 * hill(1, s2, p.N2)
+	nullclineS1(s2) = nullclineS1(s2, p1)
+	nullclineS2(s1, p) = p.K2 / p.K4 * hill(1, s1, p.N1)
+	nullclineS2(s1) = nullclineS2(s1, p1)
+	
+	# Fig 4.19 A
+	pls = map((8.0, 16.0, 20.0, 35.0)) do k1
+		p = (K1=k1, K2=20.0, K3=5.0, K4=5.0, N1=4.0, N2=4.0)
+		plot(s2 -> nullclineS1(s2, p), s2 -> s2, 0.0, 7.0, lab="Nullcline S1")
+		plot!(s1 -> s1, s1 -> nullclineS2(s1, p), 0.0, 7.0, lab="Nullcline S2")
+		plot!(title = "K1 = $k1", xlim=(0.0, 7.0), ylim=(0.0, 7.0), 
+		  aspect_ratio = 1.0, size = (800, 800), xlabel="[S1]", ylabel="[S2]")
+	end
+
+	plot(pls...)
+end
+
+# ╔═╡ e3bb6d7f-9f17-4bd2-a40e-783114404b96
+function figure0415(; param = (K0 = 8.0, K1 = 1.0, K2 = 5.0, N = 2),
+	                  r = LinRange(0.0, 4.0, 20),
+	                  tend = 8.0,
+	                  figtitle="Fig 4.15")
+
+	u0s = ( LVector(s1=1.5, s2=1.0), LVector(s1=0.0, s2=1.0),
+        	LVector(s1=0.0, s2=3.0), LVector(s1=2.0, s2=0.0))
+	sols = map(u0 -> solve(ODEProblem(model0415!, u0, tend, param)), u0s)
+
+	# Fig 4.15 A
+	p1 = plot(sols[1], xlabel="Time", ylabel="Concentration", title ="$figtitle (A)", xlims=(0.0, 8.0))
+	
+	# Fig 4.15 B
+	"Vetor field"
+	function ∂F(x, y)
+		u = LVector(s1=x, s2=y)
+		dxdy = model0415!(similar(u), u, param, 0.0)
+		return dxdy ./ (norm(dxdy)^0.5 * 20)
+	end
+	
+	nullcline_s1(s2, p=param) = (p.K0 / p.K1) * hill(1, s2, p.N)
+	nullcline_s2(s2, p=param) = (p.K2 * s2) / (p.K1 * (1 + s2^p.N))
+	
+	
+	xx = [x for y in r, x in r]
+	yy = [y for y in r, x in r]
+	p2 = quiver(xx, yy, quiver=∂F, line=(:lightblue))
+
+	for sol in sols
+		plot!(p2, sol, vars=(1, 2), label=nothing)
+	end
+	
+	rMin, rMax = r[1], r[end]
+	
+	plot!(p2, nullcline_s1, identity, rMin, rMax, label="Nullcline S1", line=(:dash, :red))
+	plot!(p2, nullcline_s2, identity, rMin, rMax, label="Nullcline S2", line=(:dash, :blue))
+	plot!(p2, title = "$figtitle (B)", xlabel="[S1]", ylabel="[S2]", 
+      xlims=(rMin, rMax), ylims=(rMin, rMax), aspect_ratio=:equal, size=(700, 700))
+	
+	return (p1, p2)
+end
+
+# ╔═╡ a0772af3-3aa3-42d3-b017-7ff99780ecfe
+fig415a, fig415b = figure0415()
+
+# ╔═╡ 97ed8540-3804-41f5-9178-d7c65b85e75c
+fig415a
+
+# ╔═╡ 167c703e-4948-487e-94c5-701f3cc15ebe
+fig415b
+
+# ╔═╡ 64cb5664-bf93-4828-b2eb-d689c548d147
+fig416a, fig416b = figure0415(param = (K0 = 8.0, K1 = 1.0, K2 = 5.0, N = 2.5), tend = 1000.0, figtitle="Fig 4.16")
+
+# ╔═╡ 03c7c066-246a-406a-9c4c-1aa83f3bfd90
+fig416a
+
+# ╔═╡ 6b60cf0c-097e-450a-8135-c77e055835c1
+fig416b
+
+# ╔═╡ 9743e59f-14c7-4336-99cc-5a2e0381e408
+let
+	param = (K0 = 8.0, K1 = 1.0, K2 = 5.0, N = 2.5)
+	sol417 = solve(ODEProblem(model0415!, LVector(s1=2.0, s2=1.5), 10.0, param))
+	r = LinRange(0.0, 4.0, 20)
+	xx = [x for y in r, x in r]
+	yy = [y for y in r, x in r]
+	
+	"Vetor field"
+	function ∂F(x, y)
+		u = LVector(s1=x, s2=y)
+		dxdy = model0415!(similar(u), u, param, 0.0)
+		return dxdy ./ (norm(dxdy)^0.5 * 20)
+	end
+	
+	nullcline_s1(s2, p=param) = (p.K0 / p.K1) * hill(1, s2, p.N)
+	nullcline_s2(s2, p=param) = (p.K2 * s2) / (p.K1 * (1 + s2^p.N))
+	
+	
+	xx = [x for y in r, x in r]
+	yy = [y for y in r, x in r]
+	p2 = quiver(xx, yy, quiver=∂F, line=(:lightblue))
+	
+	
+	quiver(xx, yy, quiver=∂F, line=(:lightblue))
+	plot!(sol417, vars=(1, 2), label=nothing, line=(:black), arrow=0.4)
+
+
+	plot!(nullcline_s1, identity, 0.0, 4.0, label="Nullcline S1", line=(:dash, :red))
+	plot!(nullcline_s2, identity, 0.0, 4.0, label="Nullcline S2", line=(:dash, :blue))
+	plot!(title = "Fig. 4.17", xlabel="[S1]", ylabel="[S2]", 
+		  xlims=(1.0, 3.0), ylims=(1.0, 3.0), aspect_ratio=:equal, size=(700, 700))
+end
+
+# ╔═╡ 23451b22-a3c0-453f-94bb-bc2b6a97d19b
+function model0418!(du, u, p, t)
+    @unpack K1, K2, K3, K4, K5, N = p
+    @unpack A, B = u
+    
+    v1 = K1 * hill(1, B, N)
+    v5 = K5 * A
+    
+    du.A = v1 - v5 - K3 * A
+    du.B = K2 + v5 - K4 * B
+end
+
+# ╔═╡ 0018fe66-ded6-4033-8d84-6e5196051316
+let
+	p = (K1=20.0, K2=5.0, K3=5.0, K4=5.0, K5=2.0, N=4)
+	k1Range = LinRange(0.0, 1000.0, 100)
+	u0 = LVector(A=0.0, B=0.0)
+	
+	# See also Ensemble analysis: https://diffeq.sciml.ai/stable/features/ensemble/
+	a = map(k1Range) do k1
+		p1 = @set p.K1 = k1
+		prob = SteadyStateProblem(model0418!, u0, p1)
+		sol = solve(prob)
+		sol[1]
+	end
+	
+	plot(k1Range, a, title = "Fig 4.18 Continuation diagram", xlabel = "K1" , ylabel= "Steady state [A]", leg=nothing, ylim=(0.0, 4.0))
+end
+
 # ╔═╡ Cell order:
 # ╠═5ba678b7-7251-4003-9f6e-df6339335635
 # ╠═0a52a098-9f37-4d89-96d1-813a0abc2f3b
@@ -488,5 +963,39 @@ end
 # ╠═91b7d696-109a-44b1-9631-69e514a290ac
 # ╠═6a1d0241-e493-4319-ab7d-c4c17db18a82
 # ╠═091c6dcf-343d-41ee-92b1-2585aecf12a6
+# ╠═a4a64652-a4b9-4345-9652-252daff344d8
+# ╠═3b20843f-539d-455e-abcf-fe15e5fcf86a
+# ╠═e97c3472-bb06-4968-92eb-336520e1c455
+# ╠═e342c29c-24c0-4f7e-95b9-5e3cec57210b
+# ╠═f3c1efd0-b76d-496a-83bd-f2c8c57d2b94
+# ╠═1ead4f46-cad1-4916-bef6-23bed88059bd
+# ╠═41b0b13d-045e-4d14-aaa3-e676fa1a23e5
+# ╠═f1453c64-f07f-4a6c-bac6-8b56373ac434
+# ╠═c6a20d1f-e3c4-4dc4-802c-6b06d0968f68
+# ╠═563c736a-9b2f-42ec-9d7e-e2868122f7eb
+# ╠═04fc83f3-1d1b-4ba7-a08c-7fc646a73de3
+# ╠═c662c3a3-e83c-4f78-897b-693e76de8de8
+# ╠═af0f7d8a-22e7-4224-a56e-17fc48a385de
+# ╠═f53cbbe1-2366-4c38-a84f-dc75c9f48e3d
+# ╠═6ebffaf6-cf39-43a2-a29b-bdd9498bb375
+# ╠═51332af1-7e4a-4f4a-b68d-7380344ad010
+# ╠═b9444e52-5b7a-41da-9885-62af0fc350e7
+# ╠═9519b1ba-726f-4a25-8993-fbe897e998cd
+# ╠═96e7a435-3411-4412-89d9-fb3b42e62a7c
+# ╠═7b747fe2-05bc-40b5-9fcf-f6e11125cc91
+# ╠═ec439af8-b24b-4167-8b79-756955e1375d
+# ╠═e3bb6d7f-9f17-4bd2-a40e-783114404b96
+# ╠═a0772af3-3aa3-42d3-b017-7ff99780ecfe
+# ╠═97ed8540-3804-41f5-9178-d7c65b85e75c
+# ╠═167c703e-4948-487e-94c5-701f3cc15ebe
+# ╠═64cb5664-bf93-4828-b2eb-d689c548d147
+# ╠═03c7c066-246a-406a-9c4c-1aa83f3bfd90
+# ╠═6b60cf0c-097e-450a-8135-c77e055835c1
+# ╠═9743e59f-14c7-4336-99cc-5a2e0381e408
+# ╠═998ba19b-63ca-4079-ab4b-f6de5d0d61b0
+# ╠═23451b22-a3c0-453f-94bb-bc2b6a97d19b
+# ╠═0018fe66-ded6-4033-8d84-6e5196051316
+# ╠═32825174-50e3-42b9-9c5d-ea744b36fefb
+# ╠═c94276d8-e844-437d-8ede-742bba44a2fd
 # ╠═6ede64c4-4851-4506-88d9-7e58d49c35e9
 # ╠═287b9e43-2313-4724-b873-d9bd87a8948d
