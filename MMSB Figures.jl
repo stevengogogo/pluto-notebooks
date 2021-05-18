@@ -11,15 +11,13 @@ begin
     Pkg.add([
         Pkg.PackageSpec(name="Plots", version="1"),
         Pkg.PackageSpec(name="PlutoUI", version="0.7"),
-        Pkg.PackageSpec(name="PyPlot", version="2"),
-		Pkg.PackageSpec(name="DifferentialEquations", version="6"),
-		Pkg.PackageSpec(name="Parameters", version="0.12"),
+	    Pkg.PackageSpec(name="DifferentialEquations", version="6"),
+	    Pkg.PackageSpec(name="Parameters", version="0.12"),
         Pkg.PackageSpec(name="LabelledArrays", version="1"),
         Pkg.PackageSpec(name="Setfield", version="0.7"),
     ])
     using Plots, PlutoUI, LinearAlgebra, DifferentialEquations, Parameters, LabelledArrays, Setfield
 	
-	import PyPlot as plt
 	Plots.gr(fmt=:png, lw=2)
 	
 	TableOfContents()
